@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Mesh AI — Blackpink Edition</title>
+  <meta name="description" content="High-performance client-side 3D depth engine." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <!-- ══════════════════ APP SHELL ══════════════════ -->
+  <div id="app" class="app">
+
+    <!-- Sticky Top Bar -->
+    <header class="top-bar">
+      <div class="logo">
+        <svg class="logo-icon" viewBox="0 0 32 32" fill="none">
+          <path d="M16 2L28 9V23L16 30L4 23V9L16 2Z" stroke="currentColor" stroke-width="1.5"/>
+          <path d="M16 2L28 9L16 16L4 9L16 2Z" fill="currentColor" opacity="0.25"/>
+          <path d="M16 16V30" stroke="currentColor" stroke-width="1.5"/>
+          <path d="M28 9L16 16" stroke="currentColor" stroke-width="1" opacity="0.35"/>
+          <path d="M4 9L16 16" stroke="currentColor" stroke-width="1" opacity="0.35"/>
+        </svg>
+        <span class="logo-text">Mesh<span class="logo-accent">AI</span></span>
+      </div>
+      <div class="step-indicator" id="stepIndicator">
+        <div class="step-dot active" data-step="1"></div>
+        <div class="step-line"></div>
+        <div class="step-dot" data-step="2"></div>
+        <div class="step-line"></div>
+        <div class="step-dot" data-step="3"></div>
+      </div>
+    </header>
+
+    <!-- ═══════ STATE 1: UPLOAD ═══════ -->
+    <section id="stateUpload" class="state state--upload active">
+      <div class="upload-hero">
+        <h1 class="upload-title">Transform any <span class="text-glow">2D image</span> into an interactive <span class="text-glow">3D model</span></h1>
+        <p class="upload-subtitle">Local high-performance depth map generation</p>
+      </div>
+
+      <div class="dropzone" id="dropzone">
+        <input type="file" id="fileInput" accept="image/*" hidden />
+        <div class="dropzone-inner">
+          <div class="dropzone-icon">
+            <svg viewBox="0 0 48 48" fill="none">
+              <path d="M24 32V16M24 16L18 22M24 16L30 22" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              <path d="M8 28V36C8 38.2091 9.79086 40 12 40H36C38.2091 40 40 38.2091 40 36V28" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </div>
+          <span class="dropzone-text">Drag &amp; drop your image here</span>
+          <span class="dropzone-hint">PNG · JPG · WEBP — max 20 MB</span>
+        </div>
+      </div>
+
+      <button class="btn btn--primary btn--upload" id="btnUpload">
+        <svg viewBox="0 0 20 20" fill="none" class="btn-icon">
+          <path d="M10 14V6M10 6L7 9M10 6L13 9" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M4 12V14C4 15.1046 4.89543 16 6 16H14C15.1046 16 16 15.1046 16 14V12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+        </svg>
+        Upload 2D Image
+      </button>
+
+      <div class="samples-section">
+        <p class="samples-label">Or try a sample</p>
+        <div class="samples-row">
+          <button class="sample-card" data-sample="assets/sample_dog.jpg">
+            <img src="assets/sample_dog.jpg" alt="Cute dog" loading="lazy" />
+            <span class="sample-name">Puppy</span>
+          </button>
+          <button class="sample-card" data-sample="assets/sample_controller.jpg">
+            <img src="assets/sample_controller.jpg" alt="Gaming controller" loading="lazy" />
+            <span class="sample-name">Controller</span>
+          </button>
+          <button class="sample-card" data-sample="assets/sample_sneaker.jpg">
+            <img src="assets/sample_sneaker.jpg" alt="Retro sneaker" loading="lazy" />
+            <span class="sample-name">Sneaker</span>
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══════ STATE 2: PROCESSING ═══════ -->
+    <section id="stateProcessing" class="state state--processing">
+      <div class="processing-canvas">
+        <img id="processingImage" class="processing-img" src="" alt="Processing" />
+        <div class="scan-line" id="scanLine"></div>
+        <div class="scan-glow"></div>
+        <div class="corner-bracket tl"></div>
+        <div class="corner-bracket tr"></div>
+        <div class="corner-bracket bl"></div>
+        <div class="corner-bracket br"></div>
+      </div>
+    </section>
+
+    <!-- ═══════ STATE 3: 3D VIEWPORT + CONTROLS + EXPORT ═══════ -->
+    <section id="stateViewport" class="state state--viewport">
+      <div class="viewport-container" id="viewportContainer">
+        <canvas id="threeCanvas"></canvas>
+        <div class="viewport-badge">
+          <span class="badge-dot"></span>
+          Live 3D Preview
+        </div>
+      </div>
+
+      <!-- Controls -->
+      <div class="controls-panel">
+        <div class="control-row">
+          <div class="control-label">
+            <svg viewBox="0 0 18 18" fill="none" class="control-icon">
+              <path d="M9 1L16 5V13L9 17L2 13V5L9 1Z" stroke="currentColor" stroke-width="1.2"/>
+              <path d="M9 1L16 5L9 9L2 5L9 1Z" fill="currentColor" opacity="0.15"/>
+            </svg>
+            Render Mode
+          </div>
+          <div class="toggle-group" id="toggleRender">
+            <button class="toggle-btn active" data-value="textured">Textured</button>
+            <button class="toggle-btn" data-value="wireframe">Wireframe</button>
+          </div>
+        </div>
+
+        <div class="control-row">
+          <div class="control-label">
+            <svg viewBox="0 0 18 18" fill="none" class="control-icon">
+              <path d="M9 1C13.4183 1 17 4.58172 17 9C17 13.4183 13.4183 17 9 17" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/>
+              <path d="M9 5C11.2091 5 13 6.79086 13 9" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/>
+              <path d="M12 17L9 17L9 14" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            Depth Scale
+          </div>
+          <input type="range" id="depthSlider" min="0" max="2" step="0.1" value="0.5" class="magenta-slider" />
+        </div>
+      </div>
+
+      <!-- Export Panel — in-flow -->
+      <div id="exportPanel" class="export-panel">
+        <button class="btn btn--export" id="btnDownload">
+          <svg viewBox="0 0 20 20" fill="none" class="btn-icon">
+            <path d="M10 3V13M10 13L6 9M10 13L14 9" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M3 13V15C3 16.1046 3.89543 17 5 17H15C16.1046 17 17 16.1046 17 15V13" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+          </svg>
+          Download Map
+        </button>
+        <button class="btn btn--new" id="btnNewConversion">
+          <svg viewBox="0 0 20 20" fill="none" class="btn-icon">
+            <path d="M10 4V16M4 10H16" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+          </svg>
+          New Conversion
+        </button>
+      </div>
+    </section>
+
+  </div>
+
+  <!-- Three.js (No GLTFLoader needed) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
